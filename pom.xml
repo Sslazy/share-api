@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.4</version>
+        <version>3.0.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -19,6 +19,7 @@
     <modules>
         <module>share-user</module>
         <module>share-common</module>
+        <module>share-gateway</module>
     </modules>
 
     <properties>
