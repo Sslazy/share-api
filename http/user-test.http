@@ -6,3 +6,7 @@ GET http://localhost:8000/user-service/hello
 Accept: application/json
 
 ###
+GET http://localhost:8000/user-service/user/count
+Accept: application/json
+
+###
