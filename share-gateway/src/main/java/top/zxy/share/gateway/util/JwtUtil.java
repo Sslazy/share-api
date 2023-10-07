@@ -1,4 +1,4 @@
-package top.zxy.share.common.util;
+package top.zxy.share.gateway.util;
 
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateTime;
