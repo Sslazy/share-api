@@ -2,6 +2,7 @@ package top.zxy.share.user.controller;
 
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
+import top.zxy.share.common.resp.CommonResp;
 import top.zxy.share.user.domain.dto.LoginDTO;
 import top.zxy.share.user.domain.entity.User;
 import top.zxy.share.user.service.UserService;
@@ -13,12 +14,18 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("/count")
-    public Long count(){
-        return userService.count();
+    public CommonResp<Long> count(){
+        Long count = userService.count();
+        CommonResp<Long> commonResp = new CommonResp<>();
+        commonResp.setData(count);
+        return commonResp;
     }
 
     @PostMapping("/login")
-    public User login(@RequestBody LoginDTO loginDTO){
-        return userService.login(loginDTO);
+    public CommonResp<User> login(@RequestBody LoginDTO loginDTO){
+        User user = userService.login(loginDTO);
+        CommonResp<User> commonResp = new CommonResp<>();
+        commonResp.setData(user);
+        return commonResp;
     }
 }
