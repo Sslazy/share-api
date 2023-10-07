@@ -1,5 +1,7 @@
 package top.zxy.share.user.service;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.jwt.JWTUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import jakarta.annotation.Resource;
@@ -9,9 +11,11 @@ import top.zxy.share.common.exception.BusinessExceptionEnum;
 import top.zxy.share.common.util.SnowUtil;
 import top.zxy.share.user.domain.dto.LoginDTO;
 import top.zxy.share.user.domain.entity.User;
+import top.zxy.share.user.domain.resp.UserLoginResp;
 import top.zxy.share.user.mapper.UserMapper;
 
 import java.util.Date;
+import java.util.Map;
 
 @Service
 public class UserService {
@@ -22,11 +26,11 @@ public class UserService {
         return userMapper.selectCount(null);
     }
 
-    public User login(LoginDTO loginDTO){
+    public UserLoginResp login(LoginDTO loginDTO){
         // 根据手机号查询用户
         User userDB = userMapper.selectOne(new QueryWrapper<User>().lambda().eq(User::getPhone,loginDTO.getPhone()));
         // 没找到，抛出运行时异常
-        if ( userDB != null ){
+        if ( userDB == null ){
             throw new BusinessException(BusinessExceptionEnum.PHONE_EXIST);
         }
         // 密码错误
@@ -35,7 +39,14 @@ public class UserService {
         }
 
         // 都正确，返回
-        return userDB;
+        UserLoginResp userLoginResp = UserLoginResp.builder()
+                .user(userDB)
+                .build();
+        String key = "InfinityX7";
+        Map<String,Object> map = BeanUtil.beanToMap(userLoginResp);
+        String token = JWTUtil.createToken(map,key.getBytes());
+        userLoginResp.setToken(token);
+        return userLoginResp;
     }
 
     public Long register(LoginDTO loginDTO){
