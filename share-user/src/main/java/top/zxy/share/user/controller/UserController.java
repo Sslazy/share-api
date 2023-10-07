@@ -29,4 +29,12 @@ public class UserController {
         commonResp.setData(user);
         return commonResp;
     }
+
+    @PostMapping("/register")
+    public CommonResp<Long> register(@Valid @RequestBody LoginDTO loginDTO){
+        Long id = userService.register(loginDTO);
+        CommonResp<Long> commonResp = new CommonResp<>();
+        commonResp.setData(id);
+        return commonResp;
+    }
 }

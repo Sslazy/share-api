@@ -17,3 +17,12 @@ Content-Type: application/json
   "phone": "19190030190",
   "password": "123123"
 }
+
+###
+POST http://localhost:8000/user-service/user/register
+Content-Type: application/json
+
+{
+  "phone": "19190030190",
+  "password": "888888"
+}
