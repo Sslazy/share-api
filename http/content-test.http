@@ -1,4 +1,7 @@
 GET http://localhost:8000/content-service/share/notice
 Accept: application/json
+###
+GET http://localhost:8000/content-service/share/list?title=并发编程
+Accept: application/json
 
 ###
