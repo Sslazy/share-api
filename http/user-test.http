@@ -8,7 +8,7 @@ Accept: application/json
 ###
 GET http://localhost:8000/user-service/user/count
 Accept: application/json
-token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYmYiOjE2OTY2NzAxMDIsInBob25lIjoiMTkxOTAwMzAxOTAiLCJpZCI6MSwiZXhwIjoxNjk2NjcxMTAyLCJpYXQiOjE2OTY2NzAxMDJ9.jKhtQEh8CnKcuGnpM1trY24CJZ4kCkMWEkFsdxq5BrY
+token: {{token}}
 
 
 ###
@@ -19,6 +19,10 @@ Content-Type: application/json
   "phone": "19190030190",
   "password": "123123"
 }
+
+> {%
+    client.global.set("token", response.body.data.token);
+%}
 
 ###
 POST http://localhost:8000/user-service/user/register
