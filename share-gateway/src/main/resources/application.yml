@@ -8,6 +8,10 @@ spring:
           uri: http://127.0.0.1:8001
           predicates:
              - Path=/user-service/**
+        - id: route-content
+          uri: http://127.0.0.1:8002
+          predicates:
+            - Path=/content-service/**
       globalcors:
         cors-configurations:
           '[/**]':

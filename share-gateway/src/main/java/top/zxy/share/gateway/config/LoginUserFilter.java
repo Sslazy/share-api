@@ -22,7 +22,9 @@ public class LoginUserFilter implements Ordered, GlobalFilter {
         if ( path.contains("/admin")
                 || path.contains("/hello")
                 || path.contains("/user-service/user/login")
-                || path.contains("/user-service/user/register") ) {
+                || path.contains("/user-service/user/register")
+                || path.contains("content-service/share/notice")
+        ) {
             log.info("不需要登录验证：{}", path);
             return chain.filter(exchange);
         } else {

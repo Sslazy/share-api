@@ -20,6 +20,7 @@
         <module>share-user</module>
         <module>share-common</module>
         <module>share-gateway</module>
+        <module>share-content</module>
     </modules>
 
     <properties>
