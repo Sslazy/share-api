@@ -2,6 +2,7 @@ package top.zxy.share.content.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -21,19 +22,23 @@ public class ShareService {
     @Resource
     private MidUserShareMapper midUserShareMapper;
 
-    public List<Share> getList(String title,Long userId){
+    public List<Share> getList(String title,Long userId,Integer pageNo,Integer pageSize){
         // 构造查询条件
         LambdaQueryWrapper<Share> wrapper = new LambdaQueryWrapper<>();
         // 按照id降序查询所有数据
         wrapper.orderByDesc(Share::getId);
         // 如标题关键字不空，则加上模糊查询条件，否则结果即所有数据
-        if( StringUtils.isNotEmpty(title)){
+        if( title != null){
             wrapper.like(Share::getTitle,title);
         }
         // 过滤出所有已经通过审核的数据并需要显示的数据
         wrapper.eq(Share::getAuditStatus,"PASS").eq(Share::getShowFlag,true);
+
+        // 内置的分页对象
+        Page<Share> page = Page.of(pageNo,pageSize);
         // 执行按条件查询
-        List<Share> shares = shareMapper.selectList(wrapper);
+        List<Share> shares = shareMapper.selectList(page,wrapper);
+
 
         // 处理后的Share数据列表
         List<Share> sharesDeal;
