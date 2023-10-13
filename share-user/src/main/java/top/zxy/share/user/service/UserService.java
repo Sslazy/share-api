@@ -5,26 +5,40 @@ import cn.hutool.jwt.JWTUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import jakarta.annotation.Resource;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import top.zxy.share.common.exception.BusinessException;
 import top.zxy.share.common.exception.BusinessExceptionEnum;
 import top.zxy.share.common.util.JwtUtil;
 import top.zxy.share.common.util.SnowUtil;
 import top.zxy.share.user.domain.dto.LoginDTO;
+import top.zxy.share.user.domain.dto.UserAddBonusMsgDTO;
+import top.zxy.share.user.domain.entity.BonusEventLog;
 import top.zxy.share.user.domain.entity.User;
 import top.zxy.share.user.domain.resp.UserLoginResp;
+import top.zxy.share.user.mapper.BonusEventLogMapper;
 import top.zxy.share.user.mapper.UserMapper;
 
 import java.util.Date;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class UserService {
     @Resource
     private UserMapper userMapper;
 
+    @Resource
+    private BonusEventLogMapper bonusEventLogMapper;
+
     public Long count(){
         return userMapper.selectCount(null);
+    }
+
+    public User findById(Long userId){
+        return userMapper.selectById(userId);
     }
 
     public UserLoginResp login(LoginDTO loginDTO){
@@ -49,6 +63,29 @@ public class UserService {
         String token = JwtUtil.createToken(userLoginResp.getUser().getId(), userLoginResp.getUser().getPhone());
         userLoginResp.setToken(token);
         return userLoginResp;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateBonus(UserAddBonusMsgDTO userAddBonusMsgDTO){
+        System.out.println(userAddBonusMsgDTO);
+        // 1.为用户修改积分
+        Long userId = userAddBonusMsgDTO.getUserId();
+        Integer bonus = userAddBonusMsgDTO.getBonus();
+        User user = userMapper.selectById(userId);
+        user.setBonus(user.getBonus() + bonus);
+        userMapper.update(user,new QueryWrapper<User>().lambda().eq(User::getId,userId));
+
+        // 2.记录日志到bouns_event_log 表里
+        bonusEventLogMapper.insert(
+                BonusEventLog.builder()
+                        .userId(userId)
+                        .value(bonus)
+                        .description(userAddBonusMsgDTO.getDescription())
+                        .event(userAddBonusMsgDTO.getEvent())
+                        .createTime(new Date())
+                        .build()
+        );
+        log.info("积分添加完毕...");
     }
 
     public Long register(LoginDTO loginDTO){

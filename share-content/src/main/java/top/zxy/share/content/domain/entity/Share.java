@@ -18,8 +18,9 @@ public class Share {
     private String title;
     private String author;
     private String cover;
+    private Boolean isOriginal;
     private String summary;
-    private String price;
+    private Integer price;
     private String downloadUrl;
     private Integer buyCount;
     private Boolean showFlag;

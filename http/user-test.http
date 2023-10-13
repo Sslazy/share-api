@@ -32,3 +32,13 @@ Content-Type: application/json
   "phone": "19190030190",
   "password": "888888"
 }
+
+###
+PUT http://localhost:8000/user-service/user/update-bonus
+content-type:application/json
+token: {{token}}
+
+{
+  "userId": 1,
+  "bonus": -11
+}

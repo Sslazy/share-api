@@ -8,8 +8,11 @@ import org.springframework.web.bind.annotation.*;
 import top.zxy.share.common.resp.CommonResp;
 
 import top.zxy.share.common.util.JwtUtil;
+import top.zxy.share.content.domain.dto.ExchangeDTO;
+import top.zxy.share.content.domain.dto.ShareRequestDTO;
 import top.zxy.share.content.domain.entity.Notice;
 import top.zxy.share.content.domain.entity.Share;
+import top.zxy.share.content.domain.resp.ShareResp;
 import top.zxy.share.content.service.NoticeService;
 import top.zxy.share.content.service.ShareService;
 
@@ -28,6 +31,14 @@ public class ShareController {
 
     // 定义每页最多的数据量，以防前端定义传递超大参数，造成页面数据量多大
     private final int MAX = 100;
+
+    @GetMapping("/{id}")
+    public CommonResp<ShareResp> getShareById(@PathVariable Long id){
+        ShareResp shareResp = shareService.findById(id);
+        CommonResp<ShareResp> commonResp = new CommonResp<>();
+        commonResp.setData(shareResp);
+        return commonResp;
+    }
 
     @GetMapping(value = "/notice")
     public CommonResp<Notice> getLatestNotice(){
@@ -62,6 +73,23 @@ public class ShareController {
             log.info("没有 token");
         }
         return userId;
+    }
+
+    @PostMapping("/exchange")
+    public CommonResp<Share> exchange(@RequestBody ExchangeDTO exchangeDTO){
+        System.out.println(exchangeDTO);
+        CommonResp<Share> commonResp = new CommonResp<>();
+        commonResp.setData(shareService.exchange(exchangeDTO));
+        return commonResp;
+    }
+
+    @PostMapping("/contribute")
+    public CommonResp<Integer> contributeShare(@RequestBody ShareRequestDTO shareRequestDTO,@RequestHeader(value = "token",required = false) String token){
+        long userId = getUserIdFromToken(token);
+        shareRequestDTO.setUserId(userId);
+        CommonResp<Integer> commonResp = new CommonResp<>();
+        commonResp.setData(shareService.contribute(shareRequestDTO));
+        return commonResp;
     }
 
 

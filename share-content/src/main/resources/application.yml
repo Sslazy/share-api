@@ -1,13 +1,25 @@
 server:
   port: 8002
-  servlet:
-    context-path: /content-service
+#  servlet:
+#    context-path: /content-service
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/content_center?characterEncoding=UTF8&autoReconnect=true&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
+  application:
+    name: content-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        heart-beat-interval: 5000
+        heart-beat-timeout: 15000
+        namespace: dev
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
 logging:
   level:
     top.zxy.share.user.mapper: debug

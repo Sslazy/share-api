@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <!-- 日志路径-->
-    <property name="PATH" value="./log/user"/>
+    <property name="PATH" value="./log/gateway"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
