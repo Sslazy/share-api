@@ -34,3 +34,17 @@ spring:
             allowedMethods: '*'
             allowCredentials: 'true'
             maxAge: '3600'
+
+knife4j:
+  # 聚合swagger文档
+  gateway:
+    enabled: true
+    routes:
+      - name: route-user
+        url: /user-service/v3/api-docs?group=user
+        service-name: user-service
+        order: 2
+      - name: route-content
+        url: /content-service/v3/api-docs?group=content
+        service-name: content-service
+        order: 3

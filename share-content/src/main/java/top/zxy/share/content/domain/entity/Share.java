@@ -20,7 +20,7 @@ public class Share {
     private String cover;
     private Boolean isOriginal;
     private String summary;
-    private Integer price;
+    private String price;
     private String downloadUrl;
     private Integer buyCount;
     private Boolean showFlag;

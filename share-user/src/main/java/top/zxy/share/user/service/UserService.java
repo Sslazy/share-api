@@ -2,6 +2,7 @@ package top.zxy.share.user.service;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.jwt.JWTUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import jakarta.annotation.Resource;
@@ -22,6 +23,7 @@ import top.zxy.share.user.mapper.BonusEventLogMapper;
 import top.zxy.share.user.mapper.UserMapper;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -109,5 +111,12 @@ public class UserService {
                 .build();
         userMapper.insert(savedUser);
         return savedUser.getId();
+    }
+
+    public List<BonusEventLog> getBonusEventLog(Long userId){
+        LambdaQueryWrapper<BonusEventLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BonusEventLog::getUserId,userId);
+        List<BonusEventLog> bonusEventLogList = bonusEventLogMapper.selectList(wrapper);
+        return bonusEventLogList;
     }
 }

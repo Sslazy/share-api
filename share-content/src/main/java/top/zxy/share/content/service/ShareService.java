@@ -4,21 +4,28 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.stereotype.Service;
 import top.zxy.share.common.resp.CommonResp;
 import top.zxy.share.content.domain.dto.ExchangeDTO;
+import top.zxy.share.content.domain.dto.ShareAuditDTO;
 import top.zxy.share.content.domain.dto.ShareRequestDTO;
+import top.zxy.share.user.domain.dto.UserAddBonusMQDTO;
 import top.zxy.share.content.domain.entity.MidUserShare;
 import top.zxy.share.content.domain.entity.Share;
+import top.zxy.share.content.domain.enums.AuditStatusEnum;
 import top.zxy.share.content.domain.resp.ShareResp;
+import top.zxy.share.content.feign.MyUserService;
 import top.zxy.share.content.feign.User;
-import top.zxy.share.content.feign.UserAddBonusMsgDTO;
-import top.zxy.share.content.feign.UserService;
+
 import top.zxy.share.content.mapper.MidUserShareMapper;
 import top.zxy.share.content.mapper.ShareMapper;
+import top.zxy.share.user.domain.dto.UserAddBonusMsgDTO;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,11 +37,14 @@ public class ShareService {
     private MidUserShareMapper midUserShareMapper;
 
     @Resource
-    private UserService userService;
+    private MyUserService myUserService;
+
+    @Resource
+    private RocketMQTemplate rocketTemplate;
 
     public ShareResp findById(Long shareId){
         Share share = shareMapper.selectById(shareId);
-        CommonResp<User> commonResp = userService.getUser(share.getUserId());
+        CommonResp<User> commonResp = myUserService.getUser(share.getUserId());
         return ShareResp.builder().share(share).nickname(commonResp.getData().getNickname()).avatarUrl(commonResp.getData().getAvatarUrl()).build();
     }
 
@@ -93,7 +103,7 @@ public class ShareService {
         }
 
         //3.看用户积分是否足够
-        CommonResp<User> commonResp = userService.getUser(userId);
+        CommonResp<User> commonResp = myUserService.getUser(userId);
         User user= commonResp.getData();
         // 兑换这条资源需要的积分
         Integer price = Integer.valueOf(share.getPrice());
@@ -102,7 +112,7 @@ public class ShareService {
             throw new IllegalArgumentException("用户积分不够！");
         }
         //4.修改积分（*-1 就是复制扣分）
-        userService.updateBouns(UserAddBonusMsgDTO.builder().userId(userId).bonus(price * -1).build());
+        myUserService.updateBonus(UserAddBonusMsgDTO.builder().userId(userId).bonus(price * -1).build());
         // 5.向mid_user_share 表植入一条数据，让这个用户对于这条资源拥有了下列权限
         midUserShareMapper.insert(MidUserShare.builder().userId(userId).shareId(shareId).build());
         return share;
@@ -128,5 +138,72 @@ public class ShareService {
                 .reason("未审核")
                 .build();
         return shareMapper.insert(share);
+    }
+
+    public List<Share> myContribute(Integer pageNo,Integer pageSize,Long userId){
+        LambdaQueryWrapper<Share> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(Share::getId);
+        wrapper.eq(Share::getUserId,userId);
+        Page<Share> page = Page.of(pageNo,pageSize);
+        return shareMapper.selectList(page,wrapper);
+    }
+
+    public List<Share> myExchange(Long userId) {
+        LambdaQueryWrapper<MidUserShare> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(MidUserShare::getUserId, userId);
+        List<MidUserShare> shareList = midUserShareMapper.selectList(wrapper);
+        List<Long> list = shareList.stream().map(item -> item.getShareId()).collect(Collectors.toList());
+        LambdaQueryWrapper<Share> queryWrapper = new LambdaQueryWrapper<>();
+        List<Share> shares = new ArrayList<Share>();
+        for (Long shareId : list) {
+            Share share = shareMapper.selectById(shareId);
+            shares.add(share);
+        }
+        return shares;
+    }
+
+    public List<Share> querySharesNotYet(){
+        LambdaQueryWrapper<Share> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(Share::getId);
+        wrapper.eq(Share::getShowFlag,false)
+                .eq(Share::getAuditStatus,"NOT_YET");
+        return shareMapper.selectList(wrapper);
+    }
+
+    public Share auditById(Long id, ShareAuditDTO shareAuditDTO){
+        // 1.查询share是否存在，不存在或者当前的audit_status ！=NOT_YET，那么抛出异常
+        Share share = shareMapper.selectById(id);
+        if(share == null){
+            throw new IllegalArgumentException("参数非法! 该分享不存在!");
+        }
+        if(!Objects.equals("NOT_YET",share.getAuditStatus())){
+            throw new IllegalArgumentException("参数非法! 该分享已审核通过或审核不通过!");
+        }
+        // 2.审核资源，将状态改为PASS或REJECT,更新原因和是否发布显示
+        share.setAuditStatus(shareAuditDTO.getAuditStatusEnum().toString());
+        share.setReason(shareAuditDTO.getReasons());
+        share.setShowFlag(shareAuditDTO.getShowFlag());
+        LambdaQueryWrapper<Share> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Share::getId,id);
+        this.shareMapper.update(share,wrapper);
+        // 3.向mid_user插入一条数据，分享的作者通过审核后，默认拥有了下载权限
+        this.midUserShareMapper.insert(
+                MidUserShare.builder()
+                        .userId(share.getUserId())
+                        .shareId(id)
+                        .build()
+        );
+
+        // 4. 如果是PASS，那么发送消息给rocketmq，让用户中心区消费，并为发布人添加积分(投稿加50分)
+        if( AuditStatusEnum.PASS.equals(shareAuditDTO.getAuditStatusEnum())){
+            rocketTemplate.convertAndSend(
+                    "add-bonus",
+                    UserAddBonusMQDTO.builder()
+                            .userId(share.getUserId())
+                            .bonus(50)
+                            .build()
+            );
+        }
+        return share;
     }
 }

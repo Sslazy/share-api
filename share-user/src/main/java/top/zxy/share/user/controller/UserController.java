@@ -6,9 +6,12 @@ import org.springframework.web.bind.annotation.*;
 import top.zxy.share.common.resp.CommonResp;
 import top.zxy.share.user.domain.dto.LoginDTO;
 import top.zxy.share.user.domain.dto.UserAddBonusMsgDTO;
+import top.zxy.share.user.domain.entity.BonusEventLog;
 import top.zxy.share.user.domain.entity.User;
 import top.zxy.share.user.domain.resp.UserLoginResp;
 import top.zxy.share.user.service.UserService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/user")
@@ -62,5 +65,12 @@ public class UserController {
         CommonResp<User> commonResp = new CommonResp<>();
         commonResp.setData(userService.findById(userId));
         return commonResp;
+    }
+    @GetMapping(value = "/getBonus")
+    public CommonResp<List<BonusEventLog>> getBonusEventLogs(@RequestParam Long id){
+        List<BonusEventLog> list = userService.getBonusEventLog(+id);
+        CommonResp<List<BonusEventLog>> resp = new CommonResp<>();
+        resp.setData(list);
+        return resp;
     }
 }

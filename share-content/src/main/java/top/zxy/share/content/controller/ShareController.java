@@ -13,8 +13,10 @@ import top.zxy.share.content.domain.dto.ShareRequestDTO;
 import top.zxy.share.content.domain.entity.Notice;
 import top.zxy.share.content.domain.entity.Share;
 import top.zxy.share.content.domain.resp.ShareResp;
+import top.zxy.share.content.feign.MyUserService;
 import top.zxy.share.content.service.NoticeService;
 import top.zxy.share.content.service.ShareService;
+import top.zxy.share.user.domain.entity.BonusEventLog;
 
 import java.util.List;
 
@@ -83,12 +85,35 @@ public class ShareController {
         return commonResp;
     }
 
+    @GetMapping("/my-exchange")
+    public CommonResp<List<Share>> myExchange(@RequestHeader(value = "token", required = false) String token) {
+        long id = getUserIdFromToken(token);
+        List<Share> shares = shareService.myExchange(id);
+        CommonResp<List<Share>> resp = new CommonResp<>();
+        resp.setData(shares);
+        return resp;
+    }
+
     @PostMapping("/contribute")
     public CommonResp<Integer> contributeShare(@RequestBody ShareRequestDTO shareRequestDTO,@RequestHeader(value = "token",required = false) String token){
         long userId = getUserIdFromToken(token);
         shareRequestDTO.setUserId(userId);
         CommonResp<Integer> commonResp = new CommonResp<>();
         commonResp.setData(shareService.contribute(shareRequestDTO));
+        return commonResp;
+    }
+
+    @GetMapping("/my-contribute")
+    public CommonResp<List<Share>> myContribute(
+            @RequestParam(required = false,defaultValue = "1") Integer pageNo,
+            @RequestParam(required = false,defaultValue = "3") Integer pageSize,
+            @RequestHeader(value = "token", required = false) String token){
+        if(pageSize > MAX){
+            pageSize = MAX;
+        }
+        long userId = getUserIdFromToken(token);
+        CommonResp<List<Share>> commonResp = new CommonResp<>();
+        commonResp.setData(shareService.myContribute(pageNo,pageSize,userId));
         return commonResp;
     }
 

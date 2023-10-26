@@ -9,14 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ShareRequestDTO {
+public class UserAddBonusMQDTO {
     private Long userId;
-    private String author;
-    private String title;
-    private Boolean isOriginal;
-    private String price;
-    private String downloadUrl;
-    private String cover;
-    private String summary;
-
+    private Integer bonus;
 }

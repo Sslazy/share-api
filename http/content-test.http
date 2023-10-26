@@ -37,3 +37,24 @@ token: {{token}}
   "cover": "https://img2.baidu.com/it/u=4002938427,987737150&fm=253&fmt=auto&app=138&f=JPEG?w=889&h=500",
   "summary": "详解vue.js  详解vue.js  详解vue.js  详解vue.js  "
 }
+###
+GET http://localhost:8000/content-service/share/my-contribute?pageNo=2&pageSize=2
+Accept: application/json
+token: {{token}}
+
+###
+GET http://localhost:8000/content-service/share/admin/list
+Accept: application/json
+token: {{token}}
+
+###
+POST http://localhost:8000/content-service/share/admin/audit/1713491913619615746
+content-type:application/json
+Accept: application/json
+token: {{token}}
+
+{
+  "auditStatusEnum": "PASS",
+  "reason": "通过审核",
+  "showFlag": true
+}
